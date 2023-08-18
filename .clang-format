@@ -1,0 +1,8 @@
+BasedOnStyle: LLVM
+AlignEscapedNewlines: Left
+AllowShortFunctionsOnASingleLine: Empty
+ColumnLimit: 80
+IndentPPDirectives: AfterHash
+IndentWidth: 4
+SpaceAfterCStyleCast: true
+SpaceBeforeCpp11BracedList: true
