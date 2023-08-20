@@ -12,21 +12,6 @@
 #include <unordered_map>
 #include <windows.h>
 
-DWORD WINAPI main_thread(LPVOID param);
-
-BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call,
-                      LPVOID lpReserved) {
-    if (ul_reason_for_call == DLL_PROCESS_ATTACH) {
-        auto mh_thread_handle =
-            CreateThread(nullptr, 0, main_thread, hModule, 0, nullptr);
-        if (mh_thread_handle) {
-            CloseHandle(mh_thread_handle);
-        }
-    }
-
-    return TRUE;
-}
-
 typedef void PyObject_t;
 typedef void PyThreadState_t;
 typedef enum { PyGILState_LOCKED, PyGILState_UNLOCKED } PyGILState_STATE;
@@ -51,7 +36,7 @@ typedef PyObject_t *(*PyTuple_GetItem_t)(PyObject_t *, int);
 typedef double (*PyFloat_AsDouble_t)(PyObject_t *);
 typedef void (*Py_DecRef_t)(PyObject_t *);
 
-#define DECLARE(Name) Name##_t Name = nullptr
+#define DECLARE(Name) static Name##_t Name = nullptr
 DECLARE(PyGILState_Ensure);
 DECLARE(PyGILState_Release);
 DECLARE(PyEval_SaveThread);
@@ -74,10 +59,10 @@ DECLARE(PyFloat_AsDouble);
 DECLARE(Py_DecRef);
 #undef DECLARE
 
-PyObject_t *GetMainCharacterPosition = nullptr;
-PyObject_t *GetMousePosition = nullptr;
-PyObject_t *AppendChat = nullptr;
-PyObject_t *SetPixelPosition = nullptr;
+static PyObject_t *GetMainCharacterPosition = nullptr;
+static PyObject_t *GetMousePosition = nullptr;
+static PyObject_t *AppendChat = nullptr;
+static PyObject_t *SetPixelPosition = nullptr;
 
 // template <class TFunc, class... TArgs>
 // auto info(TFunc func, TArgs &&...args,
@@ -97,7 +82,7 @@ PyObject_t *SetPixelPosition = nullptr;
 //     return func(args...);
 // }
 
-template <class T> T get_proc(HMODULE mod, const char *proc_name) {
+template <class T> T static get_proc(HMODULE mod, const char *proc_name) {
     auto proc = GetProcAddress(mod, proc_name);
     std::cout << std::left << std::setw(30) << std::setfill('.') << proc_name;
     if (proc == NULL) {
@@ -109,11 +94,11 @@ template <class T> T get_proc(HMODULE mod, const char *proc_name) {
     return (T) proc;
 }
 
-void init_cpython_functions();
-void init_python_functions();
-void load_script(const std::string &script_name);
-std::array<int, 3> get_player_pos();
-std::array<int, 2> get_mouse_pos();
+static void init_cpython_functions();
+static void init_python_functions();
+static void load_script(const std::string &script_name);
+static std::array<int, 3> get_player_pos();
+static std::array<int, 2> get_mouse_pos();
 
 DWORD WINAPI main_thread(LPVOID param) {
     (void) param;
@@ -219,7 +204,7 @@ DWORD WINAPI main_thread(LPVOID param) {
     return 0;
 }
 
-void init_cpython_functions() {
+static void init_cpython_functions() {
     auto python27_module = GetModuleHandleA("python27");
     if (python27_module == nullptr) {
         std::cout << "python27.dll not found\n";
@@ -252,7 +237,7 @@ void init_cpython_functions() {
 #undef INIT
 }
 
-void init_python_functions() {
+static void init_python_functions() {
     // PyRun_SimpleString("__builtins__.__import__ = old_import");
     // auto main_mod = PyImport_ImportModule("__main__");
     // if (main_mod == nullptr) {
@@ -319,10 +304,11 @@ void init_python_functions() {
     Py_DecRef(chr);
 }
 
-void load_script(const std::string &script_name) {
-    std::ifstream f(script_name, std::ios::binary);
+static void load_script(const std::string &script_name) {
+    std::string file {script_name + ".py"};
+    std::ifstream f(file, std::ios::binary);
     if (!f.is_open()) {
-        std::cout << script_name << " could not be open\n";
+        std::cout << file << " could not be open\n";
         return;
     }
     f.seekg(0, std::ios::end);
@@ -340,7 +326,7 @@ void load_script(const std::string &script_name) {
     // PyEval_RestoreThread(thread_state);
 }
 
-std::array<int, 3> get_player_pos() {
+static std::array<int, 3> get_player_pos() {
     auto res = PyObject_CallObject(GetMainCharacterPosition, nullptr);
     auto x_obj = PyTuple_GetItem(res, 0);
     auto y_obj = PyTuple_GetItem(res, 1);
@@ -355,7 +341,7 @@ std::array<int, 3> get_player_pos() {
     return {x, y, z};
 }
 
-std::array<int, 2> get_mouse_pos() {
+static std::array<int, 2> get_mouse_pos() {
     auto res = PyObject_CallObject(GetMousePosition, nullptr);
     auto x_obj = PyTuple_GetItem(res, 0);
     auto y_obj = PyTuple_GetItem(res, 1);
@@ -367,7 +353,7 @@ std::array<int, 2> get_mouse_pos() {
     return {x, y};
 }
 
-void teleport() {}
+static void teleport() {}
 // void send_msg(std::string msg) {
 //     auto res = pyobject_call_object(AppendChat, nullptr);
 //     auto x = PyFloat_AsDouble(pytuple_get_item(res, 0));

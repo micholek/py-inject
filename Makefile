@@ -1,23 +1,29 @@
 BUILD_DIR = build
-TARGET_DLL = $(BUILD_DIR)/balmora_dll.dll
+INCLUDE_DIR = include
+SOURCE_DIR = src
+TARGET_DLL = balmora.dll
+
+SOURCES = $(notdir $(wildcard $(SOURCE_DIR)/*.cpp))
+OBJECTS = $(subst .cpp,.obj,$(SOURCES))
+OBJECT_FILES = $(addprefix $(BUILD_DIR)/,$(OBJECTS))
+INCLUDE_FILES = $(wildcard $(INCLUDE_DIR)/*.h)
 CXX = cl
-CXXFLAGS = /LD /EHsc /std:c++20 /link /out:$(TARGET_DLL)
-BALMORA_DIR = c:\Users\Michal\Desktop\Balmora_21022023\
+CXXFLAGS = /c /I$(INCLUDE_DIR) /EHsc /std:c++20 /nologo
+LD = link
+LDFLAGS = /DLL /nologo
 
 .PHONY: all
-all: $(TARGET_DLL)
-
-.PHONY: copy
-copy: $(TARGET_DLL)
-	copy $(TARGET_DLL) $(BALMORA_DIR)
+all: $(BUILD_DIR)/$(TARGET_DLL)
 
 .PHONY: clean
 clean:
 	@if exist $(BUILD_DIR)/ rmdir $(BUILD_DIR) /s /q
 
-$(TARGET_DLL): balmora_dll.cpp | $(BUILD_DIR)
-	$(CXX) $^ $(CXXFLAGS)
-	@del balmora_dll.obj
+$(BUILD_DIR)/$(TARGET_DLL): $(OBJECT_FILES)
+	$(LD) $^ /OUT:$@ $(LDFLAGS)
+
+$(BUILD_DIR)/%.obj: $(SOURCE_DIR)/%.cpp $(INCLUDE_FILES) | $(BUILD_DIR)
+	$(CXX) $< /Fo: $@ $(CXXFLAGS)
 
 $(BUILD_DIR):
 	@mkdir $@
