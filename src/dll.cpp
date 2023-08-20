@@ -81,7 +81,6 @@ static PyObject_t *SetPixelPosition = nullptr;
 //         ...);
 //     return func(args...);
 // }
-
 template <class T> T static get_proc(HMODULE mod, const char *proc_name) {
     auto proc = GetProcAddress(mod, proc_name);
     std::cout << std::left << std::setw(30) << std::setfill('.') << proc_name;
@@ -91,17 +90,17 @@ template <class T> T static get_proc(HMODULE mod, const char *proc_name) {
     }
     std::cout << "found at " << std::setw(8) << std::setfill('0') << std::hex
               << proc << "\n";
-    return (T) proc;
+    // #pragma warning(suppress : 4191)
+    return reinterpret_cast<T>(reinterpret_cast<void *>(proc));
 }
 
 static void init_cpython_functions();
-static void init_python_functions();
 static void load_script(const std::string &script_name);
-static std::array<int, 3> get_player_pos();
-static std::array<int, 2> get_mouse_pos();
+// static void init_python_functions();
+// static std::array<int, 3> get_player_pos();
+// static std::array<int, 2> get_mouse_pos();
 
-DWORD WINAPI main_thread(LPVOID param) {
-    (void) param;
+DWORD WINAPI main_thread([[maybe_unused]] LPVOID param) {
     AllocConsole();
     FILE *console_out_f;
     FILE *console_in_f;
@@ -116,7 +115,7 @@ DWORD WINAPI main_thread(LPVOID param) {
     std::cout << "Calling Py_IsInitialized\n";
     if (Py_IsInitialized() == 0) {
         std::cout << "Py_IsInitialized returned 0, calling Py_Initialize\n";
-        getch();
+        _getch();
         Py_Initialize();
     }
 
@@ -237,72 +236,72 @@ static void init_cpython_functions() {
 #undef INIT
 }
 
-static void init_python_functions() {
-    // PyRun_SimpleString("__builtins__.__import__ = old_import");
-    // auto main_mod = PyImport_ImportModule("__main__");
-    // if (main_mod == nullptr) {
-    //     std::cout << "PyImport_ImportModule failed (__main__)\n";
-    //     while (1) {
-    //     }
-    // }
+// static void init_python_functions() {
+// PyRun_SimpleString("__builtins__.__import__ = old_import");
+// auto main_mod = PyImport_ImportModule("__main__");
+// if (main_mod == nullptr) {
+//     std::cout << "PyImport_ImportModule failed (__main__)\n";
+//     while (1) {
+//     }
+// }
 
-    auto player_mod = PyImport_ImportModule("player");
-    if (player_mod == nullptr) {
-        std::cout << "PyImport_ImportModule failed (player_mod)\n";
-        while (1) {
-        }
-    }
-    GetMainCharacterPosition =
-        PyObject_GetAttrString(player_mod, "GetMainCharacterPosition");
-    if (GetMainCharacterPosition == nullptr) {
-        std::cout << "PyObject_GetAttrString failed\n";
-        while (1) {
-        }
-    }
-    Py_DecRef(player_mod);
+//     auto player_mod = PyImport_ImportModule("player");
+//     if (player_mod == nullptr) {
+//         std::cout << "PyImport_ImportModule failed (player_mod)\n";
+//         while (1) {
+//         }
+//     }
+//     GetMainCharacterPosition =
+//         PyObject_GetAttrString(player_mod, "GetMainCharacterPosition");
+//     if (GetMainCharacterPosition == nullptr) {
+//         std::cout << "PyObject_GetAttrString failed\n";
+//         while (1) {
+//         }
+//     }
+//     Py_DecRef(player_mod);
 
-    auto wnd_mgr_mod = PyImport_ImportModule("wndMgr");
-    if (wnd_mgr_mod == nullptr) {
-        std::cout << "PyImport_ImportModule failed (wnd_mgr_mod)\n";
-        while (1) {
-        }
-    }
-    GetMousePosition = PyObject_GetAttrString(wnd_mgr_mod, "GetMousePosition");
-    if (GetMousePosition == nullptr) {
-        std::cout << "PyObject_GetAttrString failed\n";
-        while (1) {
-        }
-    }
-    Py_DecRef(wnd_mgr_mod);
+//     auto wnd_mgr_mod = PyImport_ImportModule("wndMgr");
+//     if (wnd_mgr_mod == nullptr) {
+//         std::cout << "PyImport_ImportModule failed (wnd_mgr_mod)\n";
+//         while (1) {
+//         }
+//     }
+//     GetMousePosition = PyObject_GetAttrString(wnd_mgr_mod,
+//     "GetMousePosition"); if (GetMousePosition == nullptr) {
+//         std::cout << "PyObject_GetAttrString failed\n";
+//         while (1) {
+//         }
+//     }
+//     Py_DecRef(wnd_mgr_mod);
 
-    auto chat = PyImport_ImportModule("chat");
-    if (chat == nullptr) {
-        std::cout << "PyImport_ImportModule failed (chat)\n";
-        // while (1) {
-        // }
-    }
-    AppendChat = PyObject_GetAttrString(chat, "AppendChat");
-    if (AppendChat == nullptr) {
-        std::cout << "PyObject_GetAttrString failed\n";
-        while (1) {
-        }
-    }
-    Py_DecRef(chat);
+//     auto chat = PyImport_ImportModule("chat");
+//     if (chat == nullptr) {
+//         std::cout << "PyImport_ImportModule failed (chat)\n";
+//         // while (1) {
+//         // }
+//     }
+//     AppendChat = PyObject_GetAttrString(chat, "AppendChat");
+//     if (AppendChat == nullptr) {
+//         std::cout << "PyObject_GetAttrString failed\n";
+//         while (1) {
+//         }
+//     }
+//     Py_DecRef(chat);
 
-    auto chr = PyImport_ImportModule("chr");
-    if (chr == nullptr) {
-        std::cout << "PyImport_ImportModule failed\n";
-        while (1) {
-        }
-    }
-    SetPixelPosition = PyObject_GetAttrString(chr, "SetPixelPosition");
-    if (SetPixelPosition == nullptr) {
-        std::cout << "PyObject_GetAttrString failed\n";
-        while (1) {
-        }
-    }
-    Py_DecRef(chr);
-}
+//     auto chr = PyImport_ImportModule("chr");
+//     if (chr == nullptr) {
+//         std::cout << "PyImport_ImportModule failed\n";
+//         while (1) {
+//         }
+//     }
+//     SetPixelPosition = PyObject_GetAttrString(chr, "SetPixelPosition");
+//     if (SetPixelPosition == nullptr) {
+//         std::cout << "PyObject_GetAttrString failed\n";
+//         while (1) {
+//         }
+//     }
+//     Py_DecRef(chr);
+// }
 
 static void load_script(const std::string &script_name) {
     std::string file {script_name + ".py"};
@@ -316,7 +315,7 @@ static void load_script(const std::string &script_name) {
     f.seekg(0);
     std::string data(size, '\0');
     f.read(&data[0], size);
-    std::cout << script_name << " ";
+    std::cout << file << " ";
     // auto thread_state = PyEval_SaveThread();
     if (PyRun_SimpleString(data.c_str()) != 0) {
         std::cout << "[FAILED]\n";
@@ -326,34 +325,34 @@ static void load_script(const std::string &script_name) {
     // PyEval_RestoreThread(thread_state);
 }
 
-static std::array<int, 3> get_player_pos() {
-    auto res = PyObject_CallObject(GetMainCharacterPosition, nullptr);
-    auto x_obj = PyTuple_GetItem(res, 0);
-    auto y_obj = PyTuple_GetItem(res, 1);
-    auto z_obj = PyTuple_GetItem(res, 2);
-    auto x = (int) PyFloat_AsDouble(x_obj);
-    auto y = (int) PyFloat_AsDouble(y_obj);
-    auto z = (int) PyFloat_AsDouble(z_obj);
-    Py_DecRef(x_obj);
-    Py_DecRef(y_obj);
-    Py_DecRef(z_obj);
-    Py_DecRef(res);
-    return {x, y, z};
-}
+// static std::array<int, 3> get_player_pos() {
+//     auto res = PyObject_CallObject(GetMainCharacterPosition, nullptr);
+//     auto x_obj = PyTuple_GetItem(res, 0);
+//     auto y_obj = PyTuple_GetItem(res, 1);
+//     auto z_obj = PyTuple_GetItem(res, 2);
+//     auto x = (int) PyFloat_AsDouble(x_obj);
+//     auto y = (int) PyFloat_AsDouble(y_obj);
+//     auto z = (int) PyFloat_AsDouble(z_obj);
+//     Py_DecRef(x_obj);
+//     Py_DecRef(y_obj);
+//     Py_DecRef(z_obj);
+//     Py_DecRef(res);
+//     return {x, y, z};
+// }
 
-static std::array<int, 2> get_mouse_pos() {
-    auto res = PyObject_CallObject(GetMousePosition, nullptr);
-    auto x_obj = PyTuple_GetItem(res, 0);
-    auto y_obj = PyTuple_GetItem(res, 1);
-    auto x = (int) PyFloat_AsDouble(x_obj);
-    auto y = (int) PyFloat_AsDouble(y_obj);
-    Py_DecRef(x_obj);
-    Py_DecRef(y_obj);
-    Py_DecRef(res);
-    return {x, y};
-}
+// static std::array<int, 2> get_mouse_pos() {
+//     auto res = PyObject_CallObject(GetMousePosition, nullptr);
+//     auto x_obj = PyTuple_GetItem(res, 0);
+//     auto y_obj = PyTuple_GetItem(res, 1);
+//     auto x = (int) PyFloat_AsDouble(x_obj);
+//     auto y = (int) PyFloat_AsDouble(y_obj);
+//     Py_DecRef(x_obj);
+//     Py_DecRef(y_obj);
+//     Py_DecRef(res);
+//     return {x, y};
+// }
 
-static void teleport() {}
+// static void teleport() {}
 // void send_msg(std::string msg) {
 //     auto res = pyobject_call_object(AppendChat, nullptr);
 //     auto x = PyFloat_AsDouble(pytuple_get_item(res, 0));

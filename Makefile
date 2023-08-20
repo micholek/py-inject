@@ -8,7 +8,7 @@ OBJECTS = $(subst .cpp,.obj,$(SOURCES))
 OBJECT_FILES = $(addprefix $(BUILD_DIR)/,$(OBJECTS))
 INCLUDE_FILES = $(wildcard $(INCLUDE_DIR)/*.h)
 CXX = cl
-CXXFLAGS = /c /I$(INCLUDE_DIR) /EHsc /std:c++20 /nologo
+CXXFLAGS = /c /I$(INCLUDE_DIR) /EHsc /std:c++20 /Wall /wd4668 /wd5039 /nologo
 LD = link
 LDFLAGS = /DLL /nologo
 
