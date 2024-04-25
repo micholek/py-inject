@@ -43,7 +43,10 @@ DWORD WINAPI main_thread([[maybe_unused]] LPVOID param) {
         Py_Initialize();
     }
 
-    load_script_if_exists("hook_compile");
+    // Line below executes on every DLL load and is application-specific.
+    // load_script_if_exists("hook_compile");
+
+    // TODO: Implement automatic scripts loading from a text file.
 
     while (1) {
         std::print(" > ");
