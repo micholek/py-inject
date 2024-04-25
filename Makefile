@@ -1,14 +1,14 @@
 BUILD_DIR = build
 INCLUDE_DIR = include
 SOURCE_DIR = src
-TARGET_DLL = balmora.dll
+TARGET_DLL = py_inj.dll
 
 SOURCES = $(notdir $(wildcard $(SOURCE_DIR)/*.cpp))
 OBJECTS = $(subst .cpp,.obj,$(SOURCES))
 OBJECT_FILES = $(addprefix $(BUILD_DIR)/,$(OBJECTS))
 INCLUDE_FILES = $(wildcard $(INCLUDE_DIR)/*.h)
 CXX = cl
-CXXFLAGS = /c /I$(INCLUDE_DIR) /EHsc /std:c++20 /Wall /wd4668 /wd5039 /nologo
+CXXFLAGS = /c /I$(INCLUDE_DIR) /EHsc /std:c++latest /Wall /wd4668 /wd5039 /nologo
 LD = link
 LDFLAGS = /DLL /nologo
 

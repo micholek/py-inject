@@ -1,8 +1,9 @@
+#include "dll.h"
+
 #include <fstream>
-#include <iomanip>
 #include <iostream>
+#include <print>
 #include <string>
-#include <windows.h>
 
 typedef int (*Py_IsInitialized_t)();
 typedef void (*Py_Initialize_t)();
@@ -15,19 +16,18 @@ DECLARE(PyRun_SimpleString);
 #undef DECLARE
 
 template <class T> T static get_proc(HMODULE mod, const char *proc_name) {
-    auto proc = GetProcAddress(mod, proc_name);
-    std::cout << std::left << std::setw(30) << std::setfill('.') << proc_name;
+    uintptr_t proc = (uintptr_t) GetProcAddress(mod, proc_name);
+    std::print("{:.<30}", proc_name);
     if (proc == NULL) {
-        std::cout << "not found\n";
+        std::println("not found");
         return nullptr;
     }
-    std::cout << "found at " << std::setw(8) << std::setfill('0') << std::hex
-              << proc << "\n";
+    std::println("found at {:#010x}", (uintptr_t) proc);
     return reinterpret_cast<T>(reinterpret_cast<void *>(proc));
 }
 
 static void init_cpython_functions();
-static void load_script(const std::string &script_name);
+static void load_script_if_exists(const std::string &script_name);
 
 DWORD WINAPI main_thread([[maybe_unused]] LPVOID param) {
     AllocConsole();
@@ -38,44 +38,46 @@ DWORD WINAPI main_thread([[maybe_unused]] LPVOID param) {
 
     init_cpython_functions();
 
-    std::cout << "Calling Py_IsInitialized\n";
     if (Py_IsInitialized() == 0) {
-        std::cout << "Py_IsInitialized returned 0, calling Py_Initialize\n";
+        std::println("Py_IsInitialized returned 0, calling Py_Initialize");
         Py_Initialize();
     }
 
-    load_script("hook_compile");
+    load_script_if_exists("hook_compile");
 
     while (1) {
-        std::cout << " > ";
-        std::string script_name;
-        std::cin >> script_name;
-        load_script(script_name);
+        std::print(" > ");
+        std::string input;
+        std::getline(std::cin, input);
+        if (input == "exit") {
+            FreeConsole();
+            break;
+        }
+        load_script_if_exists(input);
     }
     return 0;
 }
 
 static void init_cpython_functions() {
-    auto python27_module = GetModuleHandleA("python27");
-    if (python27_module == nullptr) {
-        std::cout << "python27.dll not found\n";
+    HMODULE python27 = GetModuleHandleA("python27");
+    if (python27 == nullptr) {
+        std::println("python27.dll not found");
         return;
     }
-    std::cout << "python27.dll found at " << std::hex
-              << (uintptr_t) python27_module << "\n";
+    std::println("python27.dll found at {:#010x}", (uintptr_t) python27);
 
-#define INIT(Name) (Name = get_proc<Name##_t>(python27_module, #Name))
+#define INIT(Name) (Name = get_proc<Name##_t>(python27, #Name))
     INIT(Py_IsInitialized);
     INIT(Py_Initialize);
     INIT(PyRun_SimpleString);
 #undef INIT
 }
 
-static void load_script(const std::string &script_name) {
+static void load_script_if_exists(const std::string &script_name) {
     std::string file {script_name + ".py"};
     std::ifstream f(file, std::ios::binary);
     if (!f.is_open()) {
-        std::cout << file << " could not be open\n";
+        std::println("{} could not be open", file);
         return;
     }
     f.seekg(0, std::ios::end);
@@ -83,11 +85,10 @@ static void load_script(const std::string &script_name) {
     f.seekg(0);
     std::string data(size, '\0');
     f.read(&data[0], (long long) size);
-    std::cout << file << " ";
+    std::print("{} ", file);
     if (PyRun_SimpleString(data.c_str()) != 0) {
-        std::cout << "[FAILED]\n";
+        std::println("[FAILED]");
     } else {
-        std::cout << "[OK]\n";
+        std::println("[OK]");
     }
-    std::cout << std::flush;
 }
